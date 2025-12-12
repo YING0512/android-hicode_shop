@@ -40,7 +40,7 @@ export default function SellerPage() {
 
     if (!user) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
+            <div className="min-h-screen bg-gray-50 flex items-center justify-center text-gray-800">
                 <p>請先登入</p>
             </div>
         );
@@ -123,30 +123,30 @@ export default function SellerPage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white pt-24 pb-12 px-4">
+        <div className="min-h-screen bg-gray-50 text-gray-900 pt-24 pb-12 px-4">
             <Navbar cartCount={0} onOpenCart={() => { }} subtitle="賣家中心" />
-            <div className="max-w-2xl mx-auto glass-panel p-8 rounded-2xl shadow-2xl">
-                <h1 className="text-3xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-violet-400 to-fuchsia-400">
+            <div className="max-w-2xl mx-auto bg-white border border-gray-200 p-8 rounded-lg shadow-sm">
+                <h1 className="text-2xl font-bold mb-8 text-center text-gray-800">
                     {isEditing ? '編輯商品' : '新增商品'}
                 </h1>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">商品名稱</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">商品名稱</label>
                         <input
                             type="text"
                             required
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-violet-500 transition-colors"
+                            className="w-full bg-white border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-blue-500 transition-colors"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">商品描述</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">商品描述</label>
                         <textarea
                             required
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-violet-500 transition-colors h-32"
+                            className="w-full bg-white border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-blue-500 transition-colors h-32"
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                         />
@@ -154,24 +154,24 @@ export default function SellerPage() {
 
                     <div className="grid grid-cols-2 gap-6">
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">價格 ($)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">價格 ($)</label>
                             <input
                                 type="number"
                                 required
                                 min="0"
                                 step="0.01"
-                                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-violet-500 transition-colors"
+                                className="w-full bg-white border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-blue-500 transition-colors"
                                 value={price}
                                 onChange={(e) => setPrice(e.target.value)}
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">庫存數量</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">庫存數量</label>
                             <input
                                 type="number"
                                 required
                                 min="1"
-                                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-violet-500 transition-colors"
+                                className="w-full bg-white border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-blue-500 transition-colors"
                                 value={stock}
                                 onChange={(e) => setStock(e.target.value)}
                             />
@@ -179,40 +179,35 @@ export default function SellerPage() {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">商品分類 ID</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">商品分類 ID</label>
                         <input
                             type="number"
                             required
                             min="1"
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-violet-500 transition-colors"
+                            className="w-full bg-white border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-blue-500 transition-colors"
                             value={category}
                             onChange={(e) => setCategory(e.target.value)}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">上架狀態</label>
-                        <div className="relative">
-                            <select
-                                className="w-full appearance-none bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-violet-500 transition-colors text-white cursor-pointer"
-                                value={status}
-                                onChange={(e) => setStatus(e.target.value)}
-                            >
-                                <option value="on_shelf" className="bg-slate-900 text-white">🟢 上架中 (On Shelf)</option>
-                                <option value="off_shelf" className="bg-slate-900 text-white">🔴 已下架 (Off Shelf)</option>
-                            </select>
-                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
-                            </div>
-                        </div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">上架狀態</label>
+                        <select
+                            className="w-full bg-white border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-blue-500 transition-colors cursor-pointer"
+                            value={status}
+                            onChange={(e) => setStatus(e.target.value)}
+                        >
+                            <option value="on_shelf">🟢 上架中 (On Shelf)</option>
+                            <option value="off_shelf">🔴 已下架 (Off Shelf)</option>
+                        </select>
                     </div>
 
                     {!isEditing && (
                         <div>
-                            <label className="block text-sm font-medium text-slate-300 mb-2">商品圖片 (編輯模式暫不支援修改圖片)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">商品圖片 (編輯模式暫不支援修改圖片)</label>
                             <div className="flex items-center space-x-4">
-                                <label className="cursor-pointer bg-white/10 hover:bg-white/20 transition-colors px-4 py-2 rounded-lg border border-white/10">
-                                    <span className="text-sm">選擇圖片</span>
+                                <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 transition-colors px-4 py-2 rounded border border-gray-300">
+                                    <span className="text-sm text-gray-700">選擇圖片</span>
                                     <input
                                         type="file"
                                         accept="image/*"
@@ -220,22 +215,22 @@ export default function SellerPage() {
                                         onChange={handleImageChange}
                                     />
                                 </label>
-                                {image && <span className="text-sm text-slate-400">{image.name}</span>}
+                                {image && <span className="text-sm text-gray-500">{image.name}</span>}
                             </div>
                         </div>
                     )}
 
                     {preview && (
                         <div className="mt-4">
-                            <p className="text-sm text-slate-400 mb-2">預覽:</p>
-                            <img src={preview} alt="Preview" className="h-48 w-full object-cover rounded-lg border border-white/10" />
+                            <p className="text-sm text-gray-500 mb-2">預覽:</p>
+                            <img src={preview} alt="Preview" className="h-48 w-full object-cover rounded border border-gray-200" />
                         </div>
                     )}
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white font-bold py-4 rounded-xl hover:shadow-lg hover:shadow-fuchsia-500/30 transition-all transform hover:-translate-y-0.5 disabled:opacity-50"
+                        className="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition-all disabled:opacity-50"
                     >
                         {loading ? '處理中...' : (isEditing ? '更新商品' : '確認上架')}
                     </button>

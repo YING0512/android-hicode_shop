@@ -53,39 +53,39 @@ export default function WalletPage() {
         }
     };
 
-    if (!user) return <div className="text-white text-center pt-20">請先登入</div>;
+    if (!user) return <div className="text-center pt-20 text-gray-800">請先登入</div>;
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white pt-24 pb-12 px-4">
+        <div className="min-h-screen bg-gray-50 text-gray-900 pt-24 pb-12 px-4">
             <Navbar cartCount={0} onOpenCart={() => { }} subtitle="我的錢包" />
-            <div className="max-w-md mx-auto glass-panel p-8 rounded-2xl shadow-2xl">
+            <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-sm border border-gray-200">
                 <div className="text-center mb-8">
-                    <p className="text-slate-400 text-sm uppercase tracking-wider mb-2">目前餘額</p>
-                    <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-400 to-amber-600">
-                        {balance.toFixed(0)} <span className="text-xl text-slate-500">代幣</span>
+                    <p className="text-gray-500 text-sm uppercase tracking-wider mb-2">目前餘額</p>
+                    <h1 className="text-5xl font-bold text-yellow-600">
+                        {balance.toFixed(0)} <span className="text-xl text-gray-500">代幣</span>
                     </h1>
                 </div>
 
                 <form onSubmit={handleRedeem} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">儲值代碼</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">儲值代碼</label>
                         <input
                             type="text"
                             value={code}
                             onChange={(e) => setCode(e.target.value)}
                             placeholder="輸入代碼 (例如: TEST100)"
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 focus:outline-none focus:border-yellow-500 transition-colors text-center text-lg tracking-widest uppercase"
+                            className="w-full bg-white border border-gray-300 rounded px-4 py-2 focus:outline-none focus:border-blue-500 transition-colors text-center text-lg uppercase"
                         />
                     </div>
                     {message && (
-                        <div className={`p-3 rounded text-center text-sm ${message.includes('成功') ? 'bg-green-900/50 text-green-300' : 'bg-red-900/50 text-red-300'}`}>
+                        <div className={`p-3 rounded text-center text-sm ${message.includes('成功') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                             {message}
                         </div>
                     )}
                     <button
                         type="submit"
                         disabled={loading || !code}
-                        className="w-full bg-gradient-to-r from-yellow-600 to-amber-600 text-white font-bold py-3 rounded-xl hover:shadow-lg hover:shadow-amber-500/30 transition-all disabled:opacity-50"
+                        className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-3 rounded-lg transition-all disabled:opacity-50"
                     >
                         {loading ? '處理中...' : '立即儲值'}
                     </button>

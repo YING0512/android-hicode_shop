@@ -61,7 +61,6 @@ export default function SellerDashboard() {
     const handleToggleStatus = async (product, currentStatus) => {
         const newStatus = currentStatus === 'on_shelf' ? 'off_shelf' : 'on_shelf';
 
-        // If trying to enable but stock is 0, warn user
         if (newStatus === 'on_shelf' && product.stock_quantity <= 0) {
             if (confirm('無法直接上架：目前庫存為 0。\n\n是否前往編輯頁面補充庫存？')) {
                 navigate(`/seller/edit/${product.product_id}`, { state: { product } });
@@ -77,14 +76,10 @@ export default function SellerDashboard() {
                     product_id: product.product_id,
                     seller_id: user.user_id,
                     status: newStatus,
-                    // Pass other required fields to avoid overwriting with nulls if backend is dump
-                    // Our backend handles partial updates via "isset" check on existing values, so simplified payload works? 
-                    // Wait, my backend logic fetches current values if missing. Yes.
                 })
             });
 
             if (res.ok) {
-                // Optimistic update
                 setProducts(products.map(p =>
                     p.product_id === product.product_id ? { ...p, status: newStatus } : p
                 ));
@@ -106,7 +101,7 @@ export default function SellerDashboard() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     order_id: orderId,
-                    user_id: user.user_id, // Note: This might need adjustment if backend checks owner vs seller. Current backend logic for cancel checks User OR just updates status if Seller logic is trusted.
+                    user_id: user.user_id,
                     action: 'cancel',
                     reason: reason
                 })
@@ -152,7 +147,7 @@ export default function SellerDashboard() {
     });
 
     return (
-        <div className="min-h-screen bg-slate-950 text-white pt-24 pb-12 px-4">
+        <div className="min-h-screen bg-gray-50 text-gray-900 pt-24 pb-12 px-4">
             <Navbar
                 cartCount={0}
                 onOpenCart={() => { }}
@@ -161,27 +156,27 @@ export default function SellerDashboard() {
                     <>
                         <button
                             onClick={() => navigate('/')}
-                            className="text-sm font-medium text-fuchsia-400 hover:text-fuchsia-300 transition-colors px-2"
+                            className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors px-2"
                         >
                             精選商品
                         </button>
-                        <div className="flex bg-slate-900 rounded-lg p-0.5 border border-slate-800">
+                        <div className="flex bg-gray-200 rounded p-0.5 border border-gray-300">
                             <button
                                 onClick={() => setView('products')}
-                                className={`px-3 py-1 rounded-md transition-colors text-sm font-medium ${view === 'products' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+                                className={`px-3 py-1 rounded transition-colors text-sm font-medium ${view === 'products' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                             >
                                 商品管理
                             </button>
                             <button
                                 onClick={() => setView('orders')}
-                                className={`px-3 py-1 rounded-md transition-colors text-sm font-medium ${view === 'orders' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-800'}`}
+                                className={`px-3 py-1 rounded transition-colors text-sm font-medium ${view === 'orders' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                             >
                                 訂單管理
                             </button>
                         </div>
                         <button
                             onClick={() => navigate('/seller/add')}
-                            className="bg-fuchsia-600 hover:bg-fuchsia-700 text-white font-bold py-1 px-3 rounded-lg transition-colors text-sm whitespace-nowrap"
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-1 px-3 rounded transition-colors text-sm whitespace-nowrap"
                         >
                             + 新增商品
                         </button>
@@ -190,44 +185,42 @@ export default function SellerDashboard() {
             />
             <div className="max-w-[1920px] mx-auto">
                 <div className="flex justify-between items-center mb-8">
-                    {/* Spacer removed as buttons are now in Navbar */}
                 </div>
 
                 {view === 'products' ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                         {products.map((product) => (
-                            <div key={product.product_id} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden p-4 group">
-                                <div className="aspect-square w-full rounded-lg overflow-hidden bg-slate-800 mb-4 relative">
+                            <div key={product.product_id} className="bg-white border border-gray-200 rounded-lg overflow-hidden p-4 group shadow-sm hover:shadow-md transition-shadow">
+                                <div className="aspect-square w-full rounded overflow-hidden bg-gray-100 mb-4 relative">
                                     <img
                                         src={product.image_url ? `${API_BASE_URL.replace('/backend', '')}/${product.image_url}` : "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?q=80&w=800&auto=format&fit=crop"}
                                         alt={product.name}
                                         className="w-full h-full object-cover transition-transform group-hover:scale-105"
                                     />
-                                    {/* Product Details Overlay (Simple implementation for Seller) */}
-                                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4">
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-4">
                                         <p className="text-xs text-white line-clamp-6">{product.description}</p>
                                     </div>
                                 </div>
-                                <h3 className="text-lg font-bold text-white mb-1">{product.name}</h3>
-                                <p className="text-violet-400 font-bold mb-2">NT$ {Number(product.price).toFixed(0)}</p>
-                                <div className="flex justify-between items-center text-sm text-slate-400 mb-4">
+                                <h3 className="text-lg font-bold text-gray-800 mb-1">{product.name}</h3>
+                                <p className="text-blue-600 font-bold mb-2">NT$ {Number(product.price).toFixed(0)}</p>
+                                <div className="flex justify-between items-center text-sm text-gray-500 mb-4">
                                     <span>銷量: {product.sales_count || 0}</span>
                                 </div>
-                                <div className="mb-4 flex items-center justify-between bg-slate-950/50 p-2 rounded-lg border border-slate-800">
+                                <div className="mb-4 flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
                                     <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${product.status === 'on_shelf' ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.5)]' : 'bg-slate-500'}`}></div>
+                                        <div className={`w-2 h-2 rounded-full ${product.status === 'on_shelf' ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                                         <span className={`text-xs font-bold ${product.status === 'on_shelf'
-                                            ? 'text-emerald-400'
-                                            : 'text-slate-400'
+                                            ? 'text-green-600'
+                                            : 'text-gray-500'
                                             }`}>
                                             {product.status === 'on_shelf' ? '上架中' : '已下架'}
                                         </span>
                                     </div>
                                     <button
                                         onClick={() => handleToggleStatus(product, product.status)}
-                                        className={`text-xs px-3 py-1.5 rounded-md font-medium transition-all duration-200 ${product.status === 'on_shelf'
-                                            ? 'bg-slate-800 text-slate-300 hover:bg-red-900/30 hover:text-red-300 hover:shadow-inner'
-                                            : 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-lg shadow-emerald-900/20'
+                                        className={`text-xs px-3 py-1.5 rounded font-medium transition-all duration-200 ${product.status === 'on_shelf'
+                                            ? 'bg-gray-200 text-gray-600 hover:bg-red-100 hover:text-red-600'
+                                            : 'bg-green-600 text-white hover:bg-green-500'
                                             }`}
                                     >
                                         {product.status === 'on_shelf' ? '下架' : '上架販售'}
@@ -236,29 +229,29 @@ export default function SellerDashboard() {
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => navigate(`/seller/edit/${product.product_id}`, { state: { product } })}
-                                        className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-medium py-2 rounded-lg transition-colors"
+                                        className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 rounded transition-colors"
                                     >
                                         編輯
                                     </button>
                                     <button
                                         onClick={() => handleDeleteProduct(product.product_id)}
-                                        className="px-4 bg-red-900/50 hover:bg-red-900/80 text-red-200 font-medium py-2 rounded-lg transition-colors"
+                                        className="px-4 bg-red-50 hover:bg-red-100 text-red-600 font-medium py-2 rounded transition-colors"
                                     >
                                         刪除
                                     </button>
                                 </div>
                             </div>
                         ))}
-                        {products.length === 0 && <div className="col-span-full text-center text-slate-500 py-20">暫無商品</div>}
+                        {products.length === 0 && <div className="col-span-full text-center text-gray-500 py-20">暫無商品</div>}
                     </div>
                 ) : (
                     <div>
-                        <div className="flex gap-4 border-b border-slate-800 mb-6 pb-4 overflow-x-auto">
+                        <div className="flex gap-4 border-b border-gray-200 mb-6 pb-4 overflow-x-auto">
                             {['ALL', 'PENDING', 'COMPLETED', 'CANCELLED'].map(status => (
                                 <button
                                     key={status}
                                     onClick={() => setOrderTab(status)}
-                                    className={`text-sm font-bold pb-1 whitespace-nowrap px-2 ${orderTab === status ? 'text-fuchsia-400 border-b-2 border-fuchsia-400' : 'text-slate-500 hover:text-slate-300'}`}
+                                    className={`text-sm font-bold pb-1 whitespace-nowrap px-2 ${orderTab === status ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
                                 >
                                     {status === 'ALL' ? '全部訂單' :
                                         status === 'PENDING' ? '待處理' :
@@ -268,49 +261,49 @@ export default function SellerDashboard() {
                         </div>
                         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                             {filteredOrders.map(order => (
-                                <div key={order.order_id} className="bg-slate-900 border border-slate-700/50 rounded-xl p-6 hover:border-slate-600 transition-colors">
+                                <div key={order.order_id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
                                         <div>
                                             <div className="flex items-center gap-3 mb-1">
-                                                <p className="text-lg font-bold text-white">
+                                                <p className="text-lg font-bold text-gray-800">
                                                     訂單 #{new Date(order.order_date).toISOString().slice(2, 10).replace(/-/g, '')}{String(order.order_id).padStart(4, '0')}
                                                 </p>
-                                                <span className={`px-2 py-0.5 rounded text-xs font-bold ring-1 ring-inset
-                                            ${order.status === 'COMPLETED' ? 'bg-green-500/10 text-green-400 ring-green-500/20' :
-                                                        order.status === 'PENDING' ? 'bg-yellow-500/10 text-yellow-500 ring-yellow-500/20' :
-                                                            order.status === 'CANCELLED' ? 'bg-red-500/10 text-red-500 ring-red-500/20' :
-                                                                'bg-slate-700 text-slate-300 ring-slate-600'
+                                                <span className={`px-2 py-0.5 rounded text-xs font-bold
+                                            ${order.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
+                                                        order.status === 'PENDING' ? 'bg-yellow-100 text-yellow-700' :
+                                                            order.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
+                                                                'bg-gray-100 text-gray-600'
                                                     }`}>
                                                     {order.status === 'PENDING' ? '待處理' :
                                                         order.status === 'COMPLETED' ? '已完成' :
                                                             order.status === 'CANCELLED' ? '已取消' : order.status}
                                                 </span>
                                             </div>
-                                            <p className="text-slate-400 text-sm">{new Date(order.order_date).toLocaleString()}</p>
+                                            <p className="text-gray-500 text-sm">{new Date(order.order_date).toLocaleString()}</p>
                                         </div>
                                         <div className="mt-4 sm:mt-0 text-right">
-                                            <p className="text-2xl font-bold text-white">NT$ {Number(order.total_amount).toFixed(0)}</p>
+                                            <p className="text-2xl font-bold text-gray-900">NT$ {Number(order.total_amount).toFixed(0)}</p>
                                         </div>
                                     </div>
 
                                     {/* Order Items Detail */}
-                                    <div className="bg-slate-950/50 rounded-lg p-4 mb-4">
+                                    <div className="bg-gray-50 rounded p-4 mb-4 border border-gray-100">
                                         {(() => {
                                             try {
                                                 const items = typeof order.items === 'string' ? JSON.parse(order.items) : order.items;
                                                 return items && items.map((item, idx) => (
-                                                    <div key={idx} className="flex gap-4 py-3 border-b border-white/5 last:border-0">
-                                                        <div className="w-16 h-16 bg-slate-800 rounded-md flex-shrink-0 overflow-hidden">
+                                                    <div key={idx} className="flex gap-4 py-3 border-b border-gray-200 last:border-0">
+                                                        <div className="w-16 h-16 bg-white border border-gray-200 rounded flex-shrink-0 overflow-hidden">
                                                             {item.image_url && (
                                                                 <img src={`${API_BASE_URL.replace('/backend', '')}/${item.image_url}`} alt={item.name} className="w-full h-full object-cover" />
                                                             )}
                                                         </div>
                                                         <div className="flex-1 flex justify-between items-center">
                                                             <div>
-                                                                <p className="text-slate-200 font-medium">{item.name}</p>
-                                                                <p className="text-slate-500 text-sm">x {item.quantity}</p>
+                                                                <p className="text-gray-800 font-medium">{item.name}</p>
+                                                                <p className="text-gray-500 text-sm">x {item.quantity}</p>
                                                             </div>
-                                                            <span className="text-slate-400">NT$ {Number(item.price).toFixed(0)}</span>
+                                                            <span className="text-gray-600">NT$ {Number(item.price).toFixed(0)}</span>
                                                         </div>
                                                     </div>
                                                 ));
@@ -319,10 +312,10 @@ export default function SellerDashboard() {
                                     </div>
 
                                     {/* Actions & Info */}
-                                    <div className="flex justify-between items-center border-t border-white/5 pt-4">
+                                    <div className="flex justify-between items-center border-t border-gray-100 pt-4">
                                         <div>
                                             {order.status === 'CANCELLED' && order.cancellation_reason && (
-                                                <p className="text-sm text-red-400">
+                                                <p className="text-sm text-red-600">
                                                     <span className="font-bold">取消原因:</span> {order.cancellation_reason}
                                                 </p>
                                             )}
@@ -332,13 +325,13 @@ export default function SellerDashboard() {
                                                 <>
                                                     <button
                                                         onClick={() => handleCancelOrder(order.order_id)}
-                                                        className="text-sm px-4 py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 transition-colors"
+                                                        className="text-sm px-4 py-2 rounded border border-red-200 text-red-600 hover:bg-red-50 transition-colors"
                                                     >
                                                         取消訂單
                                                     </button>
                                                     <button
                                                         onClick={() => handleCompleteOrder(order.order_id)}
-                                                        className="text-sm px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-colors"
+                                                        className="text-sm px-4 py-2 rounded bg-green-600 hover:bg-green-500 text-white font-bold transition-colors"
                                                     >
                                                         完成訂單
                                                     </button>
@@ -350,7 +343,7 @@ export default function SellerDashboard() {
                             ))}
                             {filteredOrders.length === 0 && (
                                 <div className="col-span-full text-center py-20">
-                                    <p className="text-slate-500 text-lg">此分類下尚無訂單</p>
+                                    <p className="text-gray-500 text-lg">此分類下尚無訂單</p>
                                 </div>
                             )}
                         </div>
@@ -360,7 +353,7 @@ export default function SellerDashboard() {
                 <div className="mt-12 text-center">
                     <button
                         onClick={() => navigate('/')}
-                        className="text-slate-400 hover:text-white underline"
+                        className="text-gray-500 hover:text-gray-800 underline"
                     >
                         ← 返回賣場首頁
                     </button>
