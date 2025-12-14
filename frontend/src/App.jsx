@@ -9,6 +9,7 @@ import AdminCodePage from './pages/AdminCodePage';
 
 import SellerPage from './pages/SellerPage';
 import SellerDashboard from './pages/SellerDashboard';
+import ChatPage from './pages/ChatPage';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="/seller" element={<SellerDashboard />} />
           <Route path="/seller/add" element={<SellerPage />} />
           <Route path="/seller/edit/:productId" element={<SellerPage />} />
+          <Route path="/chat" element={<ChatPage />} />
         </Routes>
       </AuthProvider>
     </Router>

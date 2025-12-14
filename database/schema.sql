@@ -108,3 +108,30 @@ INSERT INTO Product (name, description, price, stock_quantity, category_id) VALU
 ('Laptop', 'High performance laptop for gaming', 1200.00, 20, 1),
 ('Novel', 'Best selling mystery novel', 15.00, 100, 2),
 ('T-Shirt', 'Cotton t-shirt', 20.00, 200, 3);
+
+-- 9. ChatRoom Table (Added for Chat Feature)
+CREATE TABLE IF NOT EXISTS ChatRoom (
+    chat_room_id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    buyer_id INT NOT NULL,
+    seller_id INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES `Order`(order_id) ON DELETE CASCADE,
+    FOREIGN KEY (buyer_id) REFERENCES User(user_id),
+    FOREIGN KEY (seller_id) REFERENCES User(user_id),
+    UNIQUE KEY unique_chat_per_order_seller (order_id, seller_id)
+) ENGINE=InnoDB;
+
+-- 10. ChatMessage Table (Added for Chat Feature)
+CREATE TABLE IF NOT EXISTS ChatMessage (
+    message_id INT AUTO_INCREMENT PRIMARY KEY,
+    chat_room_id INT NOT NULL,
+    sender_id INT, -- Nullable for SYSTEM messages
+    message_type ENUM('TEXT', 'IMAGE', 'SYSTEM') DEFAULT 'TEXT',
+    content TEXT,
+    is_read TINYINT(1) DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (chat_room_id) REFERENCES ChatRoom(chat_room_id) ON DELETE CASCADE,
+    FOREIGN KEY (sender_id) REFERENCES User(user_id),
+    INDEX idx_chat_read (chat_room_id, is_read)
+) ENGINE=InnoDB;

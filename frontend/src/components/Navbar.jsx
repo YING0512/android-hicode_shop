@@ -7,6 +7,26 @@ export default function Navbar({ cartCount, onOpenCart, subtitle, extraControls 
     const { user, logout } = useAuth();
     const navigate = useNavigate();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+    const [unreadCount, setUnreadCount] = React.useState(0);
+
+    React.useEffect(() => {
+        if (!user) return;
+
+        const fetchUnread = async () => {
+            try {
+                const response = await fetch(`http://localhost/1208/backend/chat.php?action=list_rooms&user_id=${user.user_id}`);
+                const data = await response.json();
+                if (Array.isArray(data)) {
+                    const totalUnread = data.reduce((sum, room) => sum + (parseInt(room.unread_count) || 0), 0);
+                    setUnreadCount(totalUnread);
+                }
+            } catch (e) { console.error(e); }
+        };
+
+        fetchUnread();
+        const interval = setInterval(fetchUnread, 5000);
+        return () => clearInterval(interval);
+    }, [user]);
 
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
@@ -15,10 +35,11 @@ export default function Navbar({ cartCount, onOpenCart, subtitle, extraControls 
                     {/* Logo Area */}
                     <div className="flex items-center cursor-pointer" onClick={() => navigate('/')}>
                         <div className="flex items-center justify-center w-8 h-8 bg-blue-600 rounded mr-2">
-                            <span className="font-bold text-white">N</span>
+                            {/* Code icon concept: </> */}
+                            <span className="font-bold text-white text-xs">&lt;/&gt;</span>
                         </div>
                         <span className="text-xl font-bold text-gray-800 tracking-tight">
-                            NeonShop
+                            Hey!Code
                         </span>
                         {/* Subtitle */}
                         {subtitle && (
@@ -60,6 +81,17 @@ export default function Navbar({ cartCount, onOpenCart, subtitle, extraControls 
                                         {(user.role === 'seller' || user.role === 'admin') && (
                                             <button onClick={() => navigate('/seller')} className="text-sm font-medium text-purple-600 hover:text-purple-700">賣家中心</button>
                                         )}
+
+
+
+                                        <button onClick={() => navigate('/chat')} className="relative text-sm font-medium text-green-600 hover:text-green-700">
+                                            聊天室
+                                            {unreadCount > 0 && (
+                                                <span className="absolute -top-2 -right-2 inline-flex items-center justify-center w-4 h-4 text-xs font-bold text-white bg-red-500 rounded-full">
+                                                    {unreadCount}
+                                                </span>
+                                            )}
+                                        </button>
 
                                         <button onClick={() => navigate('/orders')} className="text-sm text-gray-600 hover:text-gray-900">我的訂單</button>
                                         <button onClick={() => { logout(); navigate('/'); }} className="text-sm text-red-600 hover:text-red-800">登出</button>
@@ -155,6 +187,18 @@ export default function Navbar({ cartCount, onOpenCart, subtitle, extraControls 
                                                 賣家中心
                                             </button>
                                         )}
+
+                                        <button
+                                            onClick={() => { navigate('/chat'); setIsMobileMenuOpen(false); }}
+                                            className="block w-full text-left px-3 py-2 text-base font-medium text-green-600 hover:bg-gray-50 flex justify-between items-center"
+                                        >
+                                            <span>聊天室</span>
+                                            {unreadCount > 0 && (
+                                                <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
+                                                    {unreadCount}
+                                                </span>
+                                            )}
+                                        </button>
                                         <button
                                             onClick={() => { navigate('/orders'); setIsMobileMenuOpen(false); }}
                                             className="block w-full text-left px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50"

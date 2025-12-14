@@ -65,11 +65,17 @@ if ($method === 'POST') {
         $order_id = $pdo->lastInsertId();
 
         // 4. 處理商品 (加入訂單明細、扣除庫存、轉帳給賣家)
+        // Track unique sellers to create chat rooms
+        $distinct_seller_ids = [];
+
         foreach ($items as $item) {
             // 取得賣家 ID
             $stmtSeller = $pdo->prepare("SELECT seller_id FROM Product WHERE product_id = ?");
             $stmtSeller->execute([$item['product_id']]);
             $seller = $stmtSeller->fetch();
+            if ($seller) {
+                $distinct_seller_ids[$seller['seller_id']] = true;
+            }
 
             if (!$seller) {
                 throw new Exception("Seller not found for Product ID " . $item['product_id']);
@@ -106,6 +112,28 @@ if ($method === 'POST') {
                 $stmtUpdateStatus = $pdo->prepare("UPDATE Product SET status = 'off_shelf' WHERE product_id = ?");
                 $stmtUpdateStatus->execute([$item['product_id']]);
             }
+        }
+
+
+
+        // 4.5 Create Chat Rooms and Send System Message
+        foreach (array_keys($distinct_seller_ids) as $s_id) {
+             // Create Room
+             $stmtChat = $pdo->prepare("INSERT IGNORE INTO ChatRoom (order_id, buyer_id, seller_id) VALUES (?, ?, ?)");
+             $stmtChat->execute([$order_id, $user_id, $s_id]);
+             
+             // Get Chat Room ID
+             $stmtGetChat = $pdo->prepare("SELECT chat_room_id FROM ChatRoom WHERE order_id = ? AND seller_id = ?");
+             $stmtGetChat->execute([$order_id, $s_id]);
+             $chatRoom = $stmtGetChat->fetch();
+             
+             if ($chatRoom) {
+                 $roomId = $chatRoom['chat_room_id'];
+                 // System Message
+                 $msg = "訂單 #$order_id 已建立。等待賣家確認。";
+                 $stmtMsg = $pdo->prepare("INSERT INTO ChatMessage (chat_room_id, message_type, content) VALUES (?, 'SYSTEM', ?)");
+                 $stmtMsg->execute([$roomId, $msg]);
+             }
         }
 
         // 5. Clear Cart
@@ -170,6 +198,15 @@ if ($method === 'POST') {
                 }
             }
 
+            // Notify in Chat
+            $stmtChats = $pdo->prepare("SELECT chat_room_id FROM ChatRoom WHERE order_id = ?");
+            $stmtChats->execute([$order_id]);
+            $rooms = $stmtChats->fetchAll();
+            foreach($rooms as $room) {
+                $stmtMsg = $pdo->prepare("INSERT INTO ChatMessage (chat_room_id, message_type, content) VALUES (?, 'SYSTEM', ?)");
+                $stmtMsg->execute([$room['chat_room_id'], "訂單 #$order_id 已取消。原因: $reason"]);
+            }
+
             $pdo->commit();
             echo json_encode(['message' => 'Order cancelled']);
         } catch (Exception $e) {
@@ -182,6 +219,16 @@ if ($method === 'POST') {
          // Verify permission in a real app, assuming logic here is checked by caller (SellerDashboard only sends if authorized)
         $stmt = $pdo->prepare("UPDATE `Order` SET status = 'COMPLETED' WHERE order_id = ?");
         $stmt->execute([$order_id]);
+
+        // Notify in Chat
+        $stmtChats = $pdo->prepare("SELECT chat_room_id FROM ChatRoom WHERE order_id = ?");
+        $stmtChats->execute([$order_id]);
+        $rooms = $stmtChats->fetchAll();
+        foreach($rooms as $room) {
+            $stmtMsg = $pdo->prepare("INSERT INTO ChatMessage (chat_room_id, message_type, content) VALUES (?, 'SYSTEM', ?)");
+            $stmtMsg->execute([$room['chat_room_id'], "訂單 #$order_id 已完成。"]);
+        }
+
         echo json_encode(['message' => 'Order marked as completed']);
     }
 } elseif ($method === 'GET') {
