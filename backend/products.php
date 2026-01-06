@@ -1,6 +1,7 @@
 <?php
 // 引入資料庫連線設定
 require 'db.php';
+require 'permissions.php';
 
 // 設定回應內容為 JSON 格式 (讓前端知道回傳的是 JSON 資料)
 header('Content-Type: application/json');
@@ -116,8 +117,14 @@ if ($method === 'GET') {
 
     // 基本資料驗證：必填欄位檢查
     if (!$seller_id || empty($name) || empty($description) || $price <= 0 || $stock_quantity < 0) {
-        http_response_code(400);
         echo json_encode(['error' => 'Missing or invalid product details (seller_id, name, description, price, stock_quantity are required).']);
+        exit();
+    }
+
+    // [權限檢查] 驗證 seller_id 是否具有 'seller' 角色
+    if (!checkSeller($pdo, $seller_id)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Permission denied: User is not a seller']);
         exit();
     }
 
@@ -204,8 +211,14 @@ if ($method === 'GET') {
 
     if (!$product || $product['seller_id'] != $seller_id) {
         // 若找不到商品或賣家 ID 不符，回傳 403 Forbidden
-        http_response_code(403);
         echo json_encode(['error' => 'Unauthorized']);
+        exit();
+    }
+
+    // [權限檢查] 驗證操作者權限 (確保是賣家)
+    if (!checkSeller($pdo, $seller_id)) {
+        http_response_code(403);
+        echo json_encode(['error' => 'Permission denied: User is not seller']);
         exit();
     }
 
@@ -256,23 +269,40 @@ if ($method === 'GET') {
     $id = $_GET['id'] ?? null;
     $seller_id = $_GET['seller_id'] ?? null;
 
-    if (!$id || !$seller_id) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Missing product ID or seller ID']);
-        exit;
+    $admin_id = $_GET['admin_id'] ?? null;
+
+    if (!$id) {
+        http_response_code(400); echo json_encode(['error' => 'Missing product ID']); exit;
     }
 
-    // 執行軟刪除 (Soft Delete)
-    // 不真的從資料庫 DROP row，而是將 is_deleted 設為 1
-    // 必須同時驗證 product_id 和 seller_id 以確保不會刪到別人的商品
-    $stmt = $pdo->prepare("UPDATE Product SET is_deleted = 1 WHERE product_id = ? AND seller_id = ?");
-    $stmt->execute([$id, $seller_id]);
+    // [權限檢查]
+    // 情境 A: 管理員刪除
+    if ($admin_id && checkAdmin($pdo, $admin_id)) {
+        $stmt = $pdo->prepare("UPDATE Product SET is_deleted = 1 WHERE product_id = ?");
+        $stmt->execute([$id]);
+        if ($stmt->rowCount() > 0) {
+            echo json_encode(['message' => 'Product deleted by Admin']);
+        } else {
+            http_response_code(404); echo json_encode(['error' => 'Product not found']);
+        }
+    
+    // 情境 B: 賣家刪除自己商品
+    } elseif ($seller_id) {
+        if (!checkSeller($pdo, $seller_id)) {
+            http_response_code(403); echo json_encode(['error' => 'User is not a seller']); exit;
+        }
+        
+        $stmt = $pdo->prepare("UPDATE Product SET is_deleted = 1 WHERE product_id = ? AND seller_id = ?");
+        $stmt->execute([$id, $seller_id]);
+        
+        if ($stmt->rowCount() > 0) {
+            echo json_encode(['message' => 'Product deleted']);
+        } else {
+            http_response_code(403); echo json_encode(['error' => 'Product not found or unauthorized']);
+        }
 
-    if ($stmt->rowCount() > 0) {
-        echo json_encode(['message' => 'Product deleted']);
     } else {
-        http_response_code(403);
-        echo json_encode(['error' => 'Product not found or unauthorized']);
+        http_response_code(400); echo json_encode(['error' => 'Missing auth params (seller_id or admin_id)']);
     }
 }
 ?>

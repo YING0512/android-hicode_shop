@@ -34,6 +34,15 @@ fun SellerDashboardScreen(navController: NavController, viewModel: SellerViewMod
     val tabs = listOf("商品管理", "訂單管理")
     val snackbarHostState = remember { SnackbarHostState() }
     val opMsg by viewModel.operationMessage.collectAsState()
+    
+    // Security Check
+    val user by com.example.ecommerce.data.SessionManager.currentUser.collectAsState()
+    LaunchedEffect(user) {
+         val role = user?.role
+         if (role != "seller" && role != "admin") {
+             navController.popBackStack()
+         }
+    }
 
     LaunchedEffect(opMsg) {
         opMsg?.let {

@@ -22,12 +22,50 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import com.example.ecommerce.data.SessionManager
 import com.example.ecommerce.data.model.Product
 import com.example.ecommerce.viewmodel.ProductViewModel
+import com.example.ecommerce.viewmodel.ChatViewModel
+import com.example.ecommerce.viewmodel.ChatListUiState
+import com.example.ecommerce.viewmodel.SellerViewModel
+import com.example.ecommerce.viewmodel.SellerOrdersUiState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(navController: NavController, viewModel: ProductViewModel = viewModel()) {
+fun HomeScreen(
+    navController: NavController, 
+    viewModel: ProductViewModel = viewModel(),
+    chatViewModel: ChatViewModel = viewModel(),
+    sellerViewModel: SellerViewModel = viewModel()
+) {
     val products by viewModel.products.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    
+    // Notification Logic
+    val user by SessionManager.currentUser.collectAsState()
+    val chatListState by chatViewModel.listUiState.collectAsState()
+    val sellerOrdersState by sellerViewModel.ordersUiState.collectAsState()
+
+    var unreadChatCount by remember { mutableStateOf(0) }
+    var pendingOrderCount by remember { mutableStateOf(0) }
+
+    LaunchedEffect(user) {
+        if (user != null) {
+            chatViewModel.loadChatRooms()
+            if (user?.role == "seller" || user?.role == "admin") {
+                sellerViewModel.loadMyOrders()
+            }
+        }
+    }
+
+    LaunchedEffect(chatListState) {
+        if (chatListState is ChatListUiState.Success) {
+            unreadChatCount = (chatListState as ChatListUiState.Success).rooms.sumOf { it.unread_count }
+        }
+    }
+
+    LaunchedEffect(sellerOrdersState) {
+        if (sellerOrdersState is SellerOrdersUiState.Success) {
+            pendingOrderCount = (sellerOrdersState as SellerOrdersUiState.Success).orders.count { it.status == "PENDING" }
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -48,9 +86,24 @@ fun HomeScreen(navController: NavController, viewModel: ProductViewModel = viewM
                     }
                 },
                 actions = {
-                    IconButton(onClick = { navController.navigate(com.example.ecommerce.ui.navigation.Screen.SellerDashboard.route) }) {
-                        Icon(Icons.Default.Settings, contentDescription = "賣家中心")
+                    val role = user?.role ?: "user"
+
+                    // Admin Panel Button (Only for Admin)
+                    if (role == "admin") {
+                        IconButton(onClick = { navController.navigate(com.example.ecommerce.ui.navigation.Screen.AdminCodes.route) }) {
+                            // Using Settings icon or similar to represent Admin
+                            // In real app use verified secure icon
+                            Text("👑") 
+                        }
                     }
+
+                    // Seller Center Button (For Seller or Admin)
+                    if (role == "seller" || role == "admin") {
+                        IconButton(onClick = { navController.navigate(com.example.ecommerce.ui.navigation.Screen.SellerDashboard.route) }) {
+                            Icon(Icons.Default.Settings, contentDescription = "賣家中心")
+                        }
+                    }
+
                     IconButton(onClick = {
                         SessionManager.clearUser()
                         navController.navigate("login") {
@@ -79,7 +132,15 @@ fun HomeScreen(navController: NavController, viewModel: ProductViewModel = viewM
                 NavigationBarItem(
                     selected = false,
                     onClick = { navController.navigate("chat") },
-                    icon = { Text("💬") },
+                    icon = { 
+                        BadgedBox(badge = {
+                            if (unreadChatCount > 0) {
+                                Badge { Text("$unreadChatCount") }
+                            }
+                        }) {
+                            Text("💬") 
+                        }
+                    },
                     label = { Text("聊天") }
                 )
                 NavigationBarItem(
@@ -91,7 +152,16 @@ fun HomeScreen(navController: NavController, viewModel: ProductViewModel = viewM
                 NavigationBarItem(
                     selected = false,
                     onClick = { navController.navigate("orders") },
-                    icon = { Text("📦") },
+                    icon = { 
+                        BadgedBox(badge = {
+                            // Only show order badge if there are pending seller orders
+                            if (pendingOrderCount > 0) {
+                                Badge { Text("$pendingOrderCount") }
+                            }
+                        }) {
+                            Text("📦")
+                        }
+                    },
                     label = { Text("訂單") }
                 )
             }

@@ -8,16 +8,17 @@
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 JS 工具與元件 -->
-    <script src="assets/js/api.js"></script>
-    <script src="assets/js/auth.js"></script>
-    <script src="assets/js/components.js"></script>
+    <script src="assets/js/api.js?v=2"></script>
+    <script src="assets/js/auth.js?v=2"></script>
+    <script src="assets/js/components.js?v=2"></script>
 </head>
 
 <body class="bg-gray-50 text-gray-900">
     <!-- 導覽列 -->
     <div id="navbar-container"></div>
 
-    <main class="min-h-screen pt-24 pb-12 px-4">
+    <!-- 預設隱藏，驗證權限後再顯示 -->
+    <main id="main-content" class="min-h-screen pt-24 pb-12 px-4 hidden">
         <div class="max-w-[1920px] mx-auto">
             <!-- 頂部控制列 (切換商品管理/訂單管理) -->
             <div class="flex justify-between items-center mb-8">
@@ -83,6 +84,10 @@
                 window.location.href = 'index.html';
                 return;
             }
+
+            // 權限通過，顯示內容
+            document.getElementById('main-content').classList.remove('hidden');
+
             renderNavbar();
             fetchMyProducts();
         });

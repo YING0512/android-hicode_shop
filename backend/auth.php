@@ -35,7 +35,7 @@ if ($method === 'POST') {
 
         try {
             // 寫入使用者資料到資料庫
-            $stmt = $pdo->prepare("INSERT INTO User (username, email, password_hash) VALUES (?, ?, ?)");
+            $stmt = $pdo->prepare("INSERT INTO User (username, email, password_hash, role) VALUES (?, ?, ?, 'user')");
             $stmt->execute([$username, $email, $hash]);
             
             // 回傳成功訊息與新用戶 ID

@@ -1,28 +1,20 @@
 <?php
 // 引入資料庫連線設定
+// 引入資料庫連線設定
 require 'db.php';
+require 'permissions.php'; // 引入統一權限檢查
+
 // 設定回應內容為 JSON 格式
 header('Content-Type: application/json');
 
 // 檢查管理員身份
-// 從 URL 參數取得 admin_id
+// 從 URL 參數取得 admin_id (實務上應從 Session/Token 取得)
 $admin_id = $_GET['admin_id'] ?? null;
 
-// 簡易檢查邏輯 (注意：在實際生產環境中應使用 session 或 JWT token 進行驗證)
-if (!$admin_id) {
+// 使用 permissions.php 的 checkAdmin 函式
+if (!checkAdmin($pdo, $admin_id)) {
     http_response_code(403);
-    echo json_encode(['error' => 'Unauthorized']);
-    exit();
-}
-
-// 查詢該使用者是否存在且角色為 admin
-$stmtCheck = $pdo->prepare("SELECT role FROM User WHERE user_id = ?");
-$stmtCheck->execute([$admin_id]);
-$callingUser = $stmtCheck->fetch();
-
-if (!$callingUser || $callingUser['role'] !== 'admin') {
-    http_response_code(403);
-    echo json_encode(['error' => 'Unauthorized']);
+    echo json_encode(['error' => 'Unauthorized: Admin access required']);
     exit();
 }
 

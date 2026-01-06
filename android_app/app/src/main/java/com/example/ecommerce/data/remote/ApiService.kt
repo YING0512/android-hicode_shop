@@ -85,4 +85,14 @@ interface ApiService {
 
     @PUT("orders.php")
     suspend fun updateOrder(@Body request: OrderUpdateRequest): Response<GeneralResponse>
+
+    // --- Admin Codes ---
+    @GET("admin_codes.php")
+    suspend fun getCodes(@Query("admin_id") adminId: Int): List<RedemptionCode>
+
+    @POST("admin_codes.php")
+    suspend fun createCode(@Body request: CreateCodeRequest): Response<GeneralResponse>
+
+    @DELETE("admin_codes.php")
+    suspend fun deleteCode(@Query("admin_id") adminId: Int, @Query("code_id") codeId: Int): Response<GeneralResponse>
 }

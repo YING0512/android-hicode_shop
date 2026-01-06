@@ -1,6 +1,7 @@
 <?php
 // 引入資料庫連線設定
 require 'db.php';
+require 'permissions.php';
 
 // 設定回應內容為 JSON 格式
 header('Content-Type: application/json');
@@ -18,9 +19,7 @@ if ($method === 'GET') {
     if ($action === 'list_rooms') {
         // 取得使用者 ID (買家或賣家)
         $user_id = isset($_GET['user_id']) ? $_GET['user_id'] : null;
-        if (!$user_id) {
-            http_response_code(400); echo json_encode(['error' => 'Missing user_id']); exit;
-        }
+        requireAuth($user_id); // 確保已登入
 
         // 查詢該使用者的所有聊天室
         // 必須抓取對方的名稱 (若我是買家，抓賣家名；若我是賣家，抓買家名)

@@ -130,7 +130,7 @@ ADDED from C:\Users\chen2\OneDrive\桌面\android\android_app\app\src\main\Andro
 	android:theme
 		ADDED from C:\Users\chen2\OneDrive\桌面\android\android_app\app\src\main\AndroidManifest.xml:23:13-51
 	android:name
-		ADDED from C:\Users\chen2\OneDrive\桌面\android\android_app\app\src\main\AndroidManifest.xml:20:13-41
+		ADDED from C:\Users\chen2\OneDrive\桌面\android\android_app\app\src\main\AndroidManifest.xml:20:13-62
 intent-filter#action:name:android.intent.action.MAIN+category:name:android.intent.category.LAUNCHER
 ADDED from C:\Users\chen2\OneDrive\桌面\android\android_app\app\src\main\AndroidManifest.xml:24:13-28:29
 action#android.intent.action.MAIN

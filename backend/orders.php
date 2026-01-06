@@ -1,6 +1,6 @@
 <?php
 // 引入資料庫連線設定
-require 'db.php';
+require 'permissions.php';
 
 // 設定回應內容為 JSON 格式
 header('Content-Type: application/json');
@@ -17,7 +17,8 @@ if ($method === 'POST') {
     // 結帳資訊 (使用者 ID 與運送地址)
     $user_id = $data['user_id'];
     $shipping_address = $data['shipping_address'];
-    
+    requireRole($pdo, $user_id, 'user'); // 確保是買家 (user role)
+
     // (1) 取得購物車資料
     $stmt = $pdo->prepare("SELECT cart_id FROM Cart WHERE user_id = ?");
     $stmt->execute([$user_id]);
@@ -111,6 +112,8 @@ if ($method === 'POST') {
             }
 
             // 將款項轉給賣家 (增加賣家餘額)
+            // 注意：一般流程可能需要等訂單完成才轉帳，此範例為下單即轉帳 (但若取消需退款 logic 需複雜化)
+            // 這裡依據原始邏輯保留
             $itemTotal = $item['price'] * $item['quantity'];
             $stmtTransfer = $pdo->prepare("UPDATE User SET wallet_balance = wallet_balance + ? WHERE user_id = ?");
             $stmtTransfer->execute([$itemTotal, $seller['seller_id']]);
@@ -168,21 +171,34 @@ if ($method === 'POST') {
     // 取消或更新訂單狀態
     $data = json_decode(file_get_contents('php://input'), true);
     $order_id = $data['order_id'];
-    $user_id = $data['user_id'];
+    $user_id = $data['user_id']; // 操作者 ID
     $action = $data['action'] ?? '';
 
-    // [情境 A] 取消訂單
+    // [情境 A] 取消訂單 (由買家 Cancel)
     if ($action === 'cancel') {
         $reason = $data['reason'] ?? 'User cancelled';
 
-        // (1) 檢查訂單狀態
-        $stmt = $pdo->prepare("SELECT status FROM `Order` WHERE order_id = ?");
+        // 權限檢查: User 必須是該訂單的 Owner 且為 'user' 角色(通常)
+        // 1. 檢查是否登入
+        requireAuth($user_id);
+        
+        // (1) 檢查訂單狀態與擁有者
+        $stmt = $pdo->prepare("SELECT status, user_id FROM `Order` WHERE order_id = ?");
         $stmt->execute([$order_id]);
         $order = $stmt->fetch();
 
-        if (!$order || $order['status'] !== 'PENDING') {
+        if (!$order) {
+            http_response_code(404); echo json_encode(['error' => 'Order not found']); exit;
+        }
+        
+        // 驗證擁有者
+        if ($order['user_id'] != $user_id) {
+            http_response_code(403); echo json_encode(['error' => 'You are not the owner of this order']); exit;
+        }
+
+        if ($order['status'] !== 'PENDING') {
             http_response_code(400);
-            echo json_encode(['error' => 'Cannot cancel order (invalid status)']);
+            echo json_encode(['error' => 'Cannot cancel order (invalid status, must be PENDING)']);
             exit();
         }
 
@@ -231,7 +247,25 @@ if ($method === 'POST') {
     
     // [情境 B] 完成訂單 (賣家操作)
     } elseif ($action === 'complete') {
-         // 在真實應用中需驗證權限 (是否為該訂單的賣家)
+        // 權限檢查: 確認是賣家
+        if (!checkSeller($pdo, $user_id)) {
+            http_response_code(403); echo json_encode(['error' => 'Permission denied: User is not seller']); exit;
+        }
+
+        // 確認該賣家是否與此訂單有關 (即訂單中包含該賣家的商品)
+        // 查詢 OrderItem -> Product -> seller_id
+        $sqlCheck = "SELECT COUNT(*) FROM OrderItem oi 
+                     JOIN Product p ON oi.product_id = p.product_id 
+                     WHERE oi.order_id = ? AND p.seller_id = ?";
+        $stmtCheck = $pdo->prepare($sqlCheck);
+        $stmtCheck->execute([$order_id, $user_id]);
+        
+        if ($stmtCheck->fetchColumn() == 0) {
+             http_response_code(403); 
+             echo json_encode(['error' => 'You do not have products in this order']); 
+             exit;
+        }
+
         $stmt = $pdo->prepare("UPDATE `Order` SET status = 'COMPLETED' WHERE order_id = ?");
         $stmt->execute([$order_id]);
 

@@ -1,22 +1,15 @@
 <?php
 // 引入資料庫連線設定
 require 'db.php';
+require 'permissions.php'; // 引入統一權限檢查
+
 // 設定回應內容為 JSON 格式
 header('Content-Type: application/json');
 
 // ----------------------------------------------------------------
 // 簡易管理員權限檢查
 // ----------------------------------------------------------------
-// 檢查管理員身份的輔助函數
-// 回傳: true (是管理員) / false (不是管理員)
-function checkAdmin($pdo, $user_id) {
-    if (!$user_id) return false;
-    // 查詢使用者角色
-    $stmt = $pdo->prepare("SELECT role FROM User WHERE user_id = ?");
-    $stmt->execute([$user_id]);
-    $user = $stmt->fetch();
-    return ($user && $user['role'] === 'admin');
-}
+// (checkAdmin 已移至 permissions.php)
 
 // 取得 HTTP 請求方法
 $method = $_SERVER['REQUEST_METHOD'];

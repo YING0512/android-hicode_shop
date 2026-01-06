@@ -24,11 +24,28 @@ async function renderNavbar() {
                 <a href="chat.html" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">聊天室</a>
                 <span id="badge-chat" class="hidden absolute top-0 right-0 -mt-1 -mr-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
             </div>
+            `;
+
+        // 賣家中心連結：僅限賣家或管理員
+        if (user.role === 'seller' || user.role === 'admin') {
+            links += `
             <div class="relative inline-block">
                 <a href="seller-dashboard.html" class="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium">賣家中心</a>
                 <span id="badge-seller" class="hidden absolute top-0 right-0 -mt-1 -mr-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
             </div>
-            
+            `;
+        }
+
+        // 後台管理連結：僅限管理員
+        if (user.role === 'admin') {
+            links += `
+            <div class="relative inline-block">
+                <a href="admin.html" class="text-yellow-400 hover:text-yellow-300 px-3 py-2 rounded-md text-sm font-bold">後台管理</a>
+            </div>
+            `;
+        }
+
+        links += `
             <div class="relative ml-3 inline-block">
                 <span class="text-gray-300 px-3 py-2 rounded-md text-sm font-medium">你好, ${user.username}</span>
                 <button onclick="Auth.logout()" class="text-red-400 hover:text-red-300 px-3 py-2 rounded-md text-sm font-medium ml-2">登出</button>

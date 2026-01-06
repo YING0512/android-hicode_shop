@@ -69,5 +69,8 @@ fun NavGraph(navController: NavHostController, modifier: Modifier = Modifier) {
              // Implement SellerProductFormScreen
              com.example.ecommerce.ui.seller.SellerProductFormScreen(navController = navController, productId = productId)
         }
+        composable(Screen.AdminCodes.route) {
+            com.example.ecommerce.ui.admin.AdminCodesScreen(navController = navController)
+        }
     }
 }

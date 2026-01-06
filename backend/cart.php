@@ -1,6 +1,7 @@
 <?php
 // 引入資料庫連線設定
 require 'db.php';
+require 'permissions.php';
 
 // 設定回應內容為 JSON 格式
 header('Content-Type: application/json');
@@ -10,18 +11,12 @@ $method = $_SERVER['REQUEST_METHOD'];
 // 讀取 JSON input
 $data = json_decode(file_get_contents('php://input'), true);
 
-// 在此範例專案中，我們直接從 URL 或 request header 取得 user_id，以簡化開發
-// 在正式環境中，這些資訊應該從後端驗證過的 JWT token 中解析出來
+// 在此範例專案中，我們直接從 URL 或 request header 取得 user_id
 $headers = getallheaders();
-// 優先從 GET 參數讀取 user_id (通常是測試用) 或 從 POST body 讀取
 $user_id = isset($_GET['user_id']) ? intval($_GET['user_id']) : (isset($data['user_id']) ? intval($data['user_id']) : null);
 
-if (!$user_id) {
-    // 除了 GET 以外的操作通常都需要 user_id
-    if ($method !== 'OPTIONS' && $method !== 'GET') {
-         // 這裡可以做更嚴格的限制
-    }
-}
+// 強制權限檢查：必須要有 user_id 且存在於 DB
+requireAuth($user_id);
 
 // ----------------------------------------------------------------
 // 1. 取得購物車內容 (GET)
