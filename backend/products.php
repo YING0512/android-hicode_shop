@@ -169,11 +169,23 @@ if ($method === 'GET') {
 // ---------------------------------------------------------
 } elseif ($method === 'PUT') {
     // PUT 請求通常是 Raw JSON，所以從 php://input 讀取
-    $data = json_decode(file_get_contents('php://input'), true);
+    $rawInput = file_get_contents('php://input');
+    
+    // DEBUG LOGGING
+    $logData = "Time: " . date('Y-m-d H:i:s') . "\n";
+    $logData .= "Method: PUT\n";
+    $logData .= "Raw Input: " . $rawInput . "\n";
+    file_put_contents('debug_log.txt', $logData, FILE_APPEND);
+    // END DEBUG LOGGING
+    
+    $data = json_decode($rawInput, true);
     
     if (!$data) {
+         file_put_contents('debug_log.txt', "Error: Invalid JSON\n", FILE_APPEND);
          http_response_code(400); echo json_encode(['error' => 'Invalid JSON']); exit();
     }
+    
+    file_put_contents('debug_log.txt', "Parsed Data: " . print_r($data, true) . "\n", FILE_APPEND);
 
     // 取得 Product ID，優先從 URL 參數拿 (RESTful 風格)，若無則從 JSON body 找
     $product_id = $_GET['id'] ?? ($data['product_id'] ?? null);
@@ -186,7 +198,7 @@ if ($method === 'GET') {
     $seller_id = $data['seller_id'];
 
     // 驗證權限：確認該商品確實存在且屬於這個賣家
-    $stmt = $pdo->prepare("SELECT seller_id FROM Product WHERE product_id = ?");
+    $stmt = $pdo->prepare("SELECT * FROM Product WHERE product_id = ?");
     $stmt->execute([$product_id]);
     $product = $stmt->fetch();
 
@@ -221,11 +233,20 @@ if ($method === 'GET') {
         $status = 'off_shelf';
     }
 
-    // 執行 SQL 更新指令
-    $stmt = $pdo->prepare("UPDATE Product SET name=?, description=?, price=?, stock_quantity=?, category_id=?, status=? WHERE product_id=?");
-    $stmt->execute([$name, $description, $price, $stock, $category_id, $status, $product_id]);
-    
-    echo json_encode(['message' => 'Product updated']);
+    try {
+        // 執行 SQL 更新指令
+        $stmt = $pdo->prepare("UPDATE Product SET name=?, description=?, price=?, stock_quantity=?, category_id=?, status=? WHERE product_id=?");
+        $result = $stmt->execute([$name, $description, $price, $stock, $category_id, $status, $product_id]);
+        
+        $logMsg = "Update Executed. Result: " . ($result ? "Access" : "Fail") . " RowCount: " . $stmt->rowCount() . "\n";
+        file_put_contents('debug_log.txt', $logMsg, FILE_APPEND);
+        
+        echo json_encode(['message' => 'Product updated']);
+    } catch (PDOException $e) {
+        file_put_contents('debug_log.txt', "Exception: " . $e->getMessage() . "\n", FILE_APPEND);
+        http_response_code(500);
+        echo json_encode(['error' => 'Database update failed: ' . $e->getMessage()]);
+    }
 
 // ---------------------------------------------------------
 // 4. 處理刪除商品 (DELETE)
